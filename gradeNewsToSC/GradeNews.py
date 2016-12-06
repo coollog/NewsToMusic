@@ -17,7 +17,10 @@ class GradeNews:
     'buzzfeed': 5,
     'nfl-news': 3,
     't3n': 3,
-    'reddit-r-all': 4 # happy source
+    'reddit-r-all': 4, # happy source
+    'the-economist': 4,
+    'reuters': 7,
+    'hacker-news': 5
   }
 
   def __init__(self, sources=[]):
