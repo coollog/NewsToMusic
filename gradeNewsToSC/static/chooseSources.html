@@ -1,0 +1,107 @@
+<style>
+  score {
+    font: 80px arial, sans-serif;
+    display: block;
+    margin: 20px auto;
+    text-align: center;
+    font-weight: bold;
+  }
+  .logo {
+    background: transparent no-repeat center center;
+    background-size: contain;
+    height: 120px;
+    width: 21%;
+    margin: 0 2% 20px;
+    display: inline-block;
+    cursor: pointer;
+    opacity: 0.3;
+  }
+  .logo:hover {
+    opacity: 0.6;
+  }
+  .logo.selected {
+    opacity: 1;
+  }
+  .logo.selected:hover {
+    opacity: 0.8;
+  }
+  selectors {
+    display: block;
+    margin: 20px auto;
+    max-width: 1000px;
+  }
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script>
+  var sources = {
+    'associated-press': 'http://i.newsapi.org/associated-press-m.png',
+    'bloomberg': 'http://i.newsapi.org/bloomberg-m.png',
+    'cnn': 'http://i.newsapi.org/cnn-m.png',
+    'fortune': 'http://i.newsapi.org/fortune-m.png',
+    'google-news': 'http://i.newsapi.org/google-news-m.png',
+    'the-new-york-times': 'http://i.newsapi.org/the-new-york-times-m.png',
+    'the-wall-street-journal': 'http://i.newsapi.org/the-wall-street-journal-m.png',
+    'the-washington-post': 'http://i.newsapi.org/the-washington-post-m.png',
+    'usa-today': 'http://i.newsapi.org/usa-today-m.png',
+    'buzzfeed': 'http://i.newsapi.org/buzzfeed-m.png',
+    'nfl-news': 'http://i.newsapi.org/nfl-news-m.png',
+    't3n': 'http://i.newsapi.org/t3n-m.png',
+    'reddit-r-all': 'http://i.newsapi.org/reddit-r-all-m.png'
+  };
+
+  var loading = false;
+
+  $(function() {
+    for (var source in sources) {
+      var src = sources[source];
+      var tag =
+          `<div class="logo"
+                style="background-image: url('${src}')"
+                source="${source}">
+           </div>`;
+      $('selectors').append(tag);
+    }
+    attachSelectorEventHandlers();
+  });
+
+  function attachSelectorEventHandlers() {
+    $('.logo').click(function() {
+      if (loading) return;
+
+      loading = true;
+      $('score').html('...');
+
+      if ($(this).hasClass('selected')) {
+        $(this).removeClass('selected');
+      } else {
+        $(this).addClass('selected');
+      }
+
+      recalculateScore();
+    });
+  }
+
+  function recalculateScore() {
+    var sources = [];
+    $('.logo').each(function() {
+      if (!$(this).hasClass('selected')) return;
+
+      var source = $(this).attr('source');
+      sources.push(source);
+    });
+
+    var data = { sources: sources };
+
+    $.post('score', data, function(res) {
+      var score = res.score;
+      $('score').html(score);
+
+      loading = false;
+    }, 'json');
+  }
+</script>
+
+<score>100</score>
+<selectors></selectors>

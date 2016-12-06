@@ -13,11 +13,19 @@ class GradeNews:
     'the-new-york-times': 9,
     'the-wall-street-journal': 7,
     'the-washington-post': 7,
-    'usa-today': 7
+    'usa-today': 7,
+    'buzzfeed': 5,
+    'nfl-news': 3,
+    't3n': 3,
+    'reddit-r-all': 4 # happy source
   }
 
-  def __init__(self):
+  def __init__(self, sources=[]):
     self.initWithHedonometer()
+
+    if len(sources) > 0:
+      self.sources = { source: self.sources[source] for source in sources }
+      print(self.sources)
 
   def initWithHedonometer(self):
     with open('words.csv', 'rb') as f:
@@ -130,4 +138,4 @@ class GradeNews:
 
       return titles
     except:
-      return getArticlesBySource(source)
+      return self.getArticlesBySource(source)

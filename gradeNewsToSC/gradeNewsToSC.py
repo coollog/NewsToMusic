@@ -2,6 +2,7 @@ from GradeNews import GradeNews
 
 grader = GradeNews()
 score = grader.gradeNewsBySource()
+print(score)
 
 import OSC
 c = OSC.OSCClient()
