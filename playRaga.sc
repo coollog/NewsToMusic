@@ -4,20 +4,37 @@ Algorithmic Computer Music Final
 
 -----------------------------------------------------------------------*/
 
-//Get Raw Score
-
-
+// Check port of OSC server
 NetAddr.langPort;
 
+// Run this
 (
 var playRaga;
+b = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+"TablaLowLongHitG.wav");
 
 p = 0;
 
 playRaga = {
-	arg score;
 
+	//get score, assign to global
+	arg score;
 	~score = score;
+	~strength=~score%5;
+
+	//initialize raga arrays
+	~raga;
+	~backraga;
+
+	/*Arrays of Raga patterns fomat:
+
+	RagaTitle = [intro, main pattern, outro]
+	Index of raga corresponds to pattern used:
+	intro = RagaTitle[0]
+	main pattern = RagaTitle[1]
+	outro = RagaTitle[2]
+
+	*/
+
 
 	//0-10
 	~ragaShivranjani = [[0,2,3,7,9,11], [2,3,7,9,7,3,2,3,0,2,-3,0], [12,9,7,3,2,0]];
@@ -49,100 +66,151 @@ playRaga = {
 	//91-100
 	~ragaDes = [[0,2,5,7,11,12], [2,2,5,7,10,9,7,5,4,2,4,-1,0], [12,10,9,7,5,4,2,4,0]];
 
-	x = case
-	{ (0 <= ~score) && (~score <= 10) }   { ~raga = ~ragaShivranjani }
-	{ (11 <= ~score) && (~score <= 20) }   { ~raga = ~ragaMianKiTodi }
-	{ (21 <= ~score) && (~score <= 30) }   { ~raga = ~ragaShree }
-	{ (31 <= ~score) && (~score <= 40) }   { ~raga = ~ragaBairagiBhairav }
-	{ (41 <= ~score) && (~score <= 50) }   { ~raga = ~ragaMarwa }
-	{ (51 <= ~score) && (~score <= 60) }   { ~raga = ~ragaYaman }
-	{ (61 <= ~score) && (~score <= 70) }   { ~raga = ~ragaGaudSarang }
-	{ (71 <= ~score) && (~score <= 80) }   { ~raga = ~ragaBihaag }
-	{ (81 <= ~score) && (~score <= 90) }   { ~raga = ~ragaTilakKamod }
-	{ (91 <= ~score) && (~score <= 100) }   { ~raga = ~ragaDes };
 
-	~raga.postln;
+	//case statement to assign ragas
+	(
+		x = case
+		{ (0 <= ~score) && (~score <= 10) }   { ~raga = ~ragaShivranjani; ~backraga = ~ragaMianKiTodi; ~strength=~score/2  }
+		{ (11 <= ~score) && (~score <= 15) }   { ~raga = ~ragaMianKiTodi; ~backraga = ~ragaShivranjani }
+		{ (16 <= ~score) && (~score <= 20) }   { ~raga = ~ragaMianKiTodi; ~backraga = ~ragaShree }
+		{ (21 <= ~score) && (~score <= 25) }   { ~raga = ~ragaShree; ~backraga =~ragaMianKiTodi  }
+		{ (25 <= ~score) && (~score <= 30) }   { ~raga = ~ragaShree; ~backraga = ~ragaBairagiBhairav }
+		{ (31 <= ~score) && (~score <= 35) }   { ~raga = ~ragaBairagiBhairav; ~backraga =~ragaShree  }
+		{ (36 <= ~score) && (~score <= 40) }   { ~raga = ~ragaBairagiBhairav; ~backraga =~ragaMarwa  }
+		{ (41 <= ~score) && (~score <= 45) }   { ~raga = ~ragaMarwa; ~backraga = ~ragaBairagiBhairav }
+		{ (46 <= ~score) && (~score <= 50) }   { ~raga = ~ragaMarwa; ~backraga =~ragaYaman  }
+		{ (51 <= ~score) && (~score <= 55) }   { ~raga = ~ragaYaman; ~backraga = ~ragaMarwa }
+		{ (56 <= ~score) && (~score <= 60) }   { ~raga = ~ragaYaman; ~backraga =  ~ragaGaudSarang}
+		{ (61 <= ~score) && (~score <= 65) }   { ~raga = ~ragaGaudSarang; ~backraga =~ragaYaman  }
+		{ (66 <= ~score) && (~score <= 70) }   { ~raga = ~ragaGaudSarang; ~backraga = ~ragaBihaag }
+		{ (71 <= ~score) && (~score <= 75) }   { ~raga = ~ragaBihaag; ~backraga = ~ragaGaudSarang }
+		{ (76 <= ~score) && (~score <= 80) }   { ~raga = ~ragaBihaag; ~backraga = ~ragaTilakKamod }
+		{ (81 <= ~score) && (~score <= 85) }   { ~raga = ~ragaTilakKamod; ~backraga = ~ragaBihaag }
+		{ (86 <= ~score) && (~score <= 90) }   { ~raga = ~ragaTilakKamod; ~backraga = ~ragaDes }
+		{ (91 <= ~score) && (~score <= 100) }   { ~raga = ~ragaDes; ~backraga =  ~ragaTilakKamod; ~strength=(~score-90)/2};
 
-	SynthDef(\sinegrain, {arg pan, freq, amp; var grain;
+		~raga.postln;
+		~backraga.postln;
+	);
 
-		grain= SinOsc.ar(freq, 0, amp)*(XLine.kr(1.001,0.001,0.1,doneAction:2)-0.001);
 
-		Out.ar(0,Pan2.ar(grain, pan))}).add;
+	//Convert pitch classes in above arrays to interval ratios
+	e = Scale.chromatic;
+
+	~intervalRatios = Dictionary.newFrom(List[
+		-5, 1 - (e.ratios[5] - 1),
+		-4, 1 - (e.ratios[4] - 1),
+		-3, 1 - (e.ratios[3] - 1),
+		-2, 1 - (e.ratios[2] - 1),
+		-1, 1 - (e.ratios[1] - 1),
+		0, e.ratios[0],
+		1, e.ratios[1],
+		2, e.ratios[2],
+		3, e.ratios[3],
+		4, e.ratios[4],
+		5, e.ratios[5],
+		6, e.ratios[6],
+		7, e.ratios[7],
+		8, e.ratios[8],
+		9, e.ratios[9],
+		10, e.ratios[10],
+		11, e.ratios[11],
+		12, [2],
+		13, 1 + e.ratios[1]
+	]);
+
+	~convertedraga = List[];
+	~convertedbackraga = List[];
+
+	for(0, 2,
+		{arg i;
+			var cr = List[1];
+			~raga[i].do({|j|
+				cr.add(~intervalRatios[j])
+			});
+			~convertedraga.add(cr);
+		}
+	);
+
+
+	for(0, 2,
+		{arg i;
+			var cbr = List[1];
+			~backraga[i].do({|j|
+				cbr.add(~intervalRatios[j])
+			});
+			~convertedbackraga.add(cbr);
+		}
+	);
+
+	//final note arrays for ragas to be played below
+	~convertedraga.postln;
+	~convertedbackraga.postln;
+
+	//-----------------------------------------------------------------------
+	//¡Generate some grainz!
+	//-----------------------------------------------------------------------
+
+	//A routine with 4 synthdefs (1 for intro, 2 for main, 1 for outro)
+
+	//Speed of playback of sample is varied with the trate variable
+	//Fades accomplished with the XOut Ugen
 
 	p = 1;
-	r = Routine {
+	(
+		r = Routine{
+			SynthDef(\grainy0,{ arg out=0, buffer=0, fade=1;
+				var signal, trate, dur, rate;
+				trate = XLine.kr(1/20* BufDur.kr(buffer),250, 30);
+				rate=Dseq(~convertedraga[0].asArray,inf);
+				dur = BufDur.kr(buffer);
+				signal = 	TGrains.ar(2, Impulse.kr(trate), buffer, Dseq(~convertedraga[0].asArray,inf), dur/2, dur,0, 0.7, 4);
+				XOut.ar(0, fade, signal)
+			}).send(s);
+			SynthDef(\grainy1,{ arg out=0, buffer=0;
+				var signal, trate, dur, rate,env;
+				env = Env.new([250, 250, 100, 250, 250, 30, 250, 500, 500, 250], [5, 1.5, 1.5, 4, 15, 15, 2, 5, 10], [\hold, \lin, \lin, \hold,\exp,\exp, \wel, \hold, \cubed]);
+				trate = EnvGen.kr(env);
+				rate=Dseq(~convertedraga[1].asArray,inf);
+				dur = BufDur.kr(buffer);
+				signal = 	TGrains.ar(2, Impulse.kr(trate), buffer, Dseq(~convertedraga[1].asArray,inf), dur/2, dur,0, 0.7, 4);
+				XOut.ar(0, Line.kr(0, 1, 7), signal)
+			}).send(s);
+			SynthDef(\backgrainy1,{ arg out=0, buffer=0;
+				var signal, trate, dur, rate, env;
+				env = Env.new([0.01, 100*~strength, 0.01],[21, 21],\wel);
+				trate = EnvGen.kr(env);
+				dur = BufDur.kr(buffer);
+				signal = 	TGrains.ar(2, Impulse.kr(trate), buffer, Dseq(~convertedbackraga[1].asArray,inf), (2*dur)/3, dur,0, 0.7, 4);
+				Out.ar(0, signal)
+			}).send(s);
+			SynthDef(\grainy2,{ arg out=0, buffer=0;
+				var signal, trate, dur, rate;
+				trate = Line.kr(250,1/20* BufDur.kr(buffer), 35);
+				rate=Dseq(~convertedraga[0].asArray,inf);
+				dur = BufDur.kr(buffer);
+				signal = 	TGrains.ar(2, Impulse.kr(trate), buffer, Dseq(~convertedraga[2].asArray,inf), dur/2, dur,0, 0.7, 4);
+				XOut.ar(0,Line.kr(0, 1, 7) , signal)
+			}).send(s);
+
+			g = Synth(\grainy0, [\buffer, b.bufnum, \fade, 1]);
+			30.wait;
+			u = Synth.tail(s,\grainy1, [\buffer, b.bufnum]);
+			7.wait;
+			g.free;
+			q=Synth(\backgrainy1, [\buffer, b.bufnum]);
+			10.wait;
+			10.wait;
+			w = Synth.tail(s,\grainy2, [\buffer, b.bufnum,]);
+			15.wait;
+			u.free;
+			q.free;
+			20.wait;
+			w.free;
+		}.play
+	)
 
 
-		1000.do{arg i;
-			var note;
-			var size;
-			var timeprop = (1/((i))**1.2);
-
-			size = ~raga[0].size;
-			note = ~raga[0][i%size];
-			note = note +70;
-			note = note.midicps;
-
-			Synth(\sinegrain,[\freq,note,\amp, exprand(0.05,0.1), \pan, 1.0.rand2]);
-			//0.01.wait
-
-			rrand((timeprop*99).min(0.1), (timeprop*100).min(0.1)).wait;
-
-			//XLine.kr(1, 0.01, 10).wait;
-
-			//rrand((timeprop*0.4).max(1), timeprop*0.1).wait
-		};
-
-
-		//Music for Main section
-
-
-		500.do{arg i;
-			var note;
-			var size;
-			var timeprop = (1/(sqrt(i)));
-
-
-			size = ~raga[1].size;
-			note = ~raga[1][i%size];
-			note = note + 70;
-			note = note.midicps;
-
-			Synth(\sinegrain,[\freq,note,\amp, exprand(0.05,0.1), \pan, 1.0.rand2]);
-			0.01.wait
-			//rrand(0.005, (timeprop*0.9).min(0.1)).wait;
-
-			//XLine.kr(1, 0.01, 10).wait;
-
-			//rrand((timeprop*0.4).max(1), timeprop*0.1).wait
-		};
-
-
-
-
-
-		200.do{arg i;
-			var note;
-			var size;
-			var timeprop = (i/199.0)**3;
-
-			size = ~raga[2].size;
-			note = ~raga[2][i%size];
-			note = note + 70;
-			note = note.midicps;
-
-			Synth(\sinegrain,[\freq,note,\amp, exprand(0.05,0.1), \pan, 1.0.rand2]);
-
-			//0.01.wait
-			//rrand(0.005, (timeprop*0.9).min(0.1)).wait;
-			//XLine.kr(1, 0.01, 10).wait;
-
-			rrand((timeprop*0.1).max(0.01),timeprop*0.4).wait
-		};
-
-
-
-	}.play;
 };
 
 
@@ -154,9 +222,9 @@ o = OSCFunc({
 	if(p==1,r.stop);
 	playRaga.value(score);
 }, '/score');
-
-
 );
+
+
 
 // Free the OSCFunc before making a new one
 o.free;
